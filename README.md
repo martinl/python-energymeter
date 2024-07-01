@@ -4,7 +4,7 @@ This is a Python module that implements the communication to several electricity
 
 At the moment, the following meters are supported:
 
-* ABB B21, B23, A43 and similar ABB meters (Modbus Serial)
+* ABB B21, B23, A43, EV3 and similar ABB meters (Modbus Serial)
 * SMA SunnyBoy (Modbus TCP)
 * MultiCube meters
 
@@ -30,6 +30,15 @@ data = meter.read()
 ```
 
 This returns a dictionary with all key-value pairs of data.
+
+To read all resgisters from ABB EV3 (using default serial values 9600, 8E1):
+```
+from energymeter import ABBMeter
+import serial
+
+meter = ABBMeter(port="/dev/ttyUSB0", baudrate=9600, parity=serial.PARITY_EVEN, slaveaddress=1, model="EV3")
+data = meter.read()
+```
 
 To read a single register:
 

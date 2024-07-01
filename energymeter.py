@@ -4,6 +4,7 @@ import socket
 import struct
 import asyncio
 import time
+import serial
 
 import minimalmodbus
 import tinysbus
@@ -13,22 +14,25 @@ from collections.abc import Iterable
 
 class ModbusRTUMeter:
     """Meter class that uses a minimalmodbus Instrument to query an ABB meter."""
-    def __init__(self, port, baudrate=38400, slaveaddress=1, timeout=0.5):
+    def __init__(self, port, baudrate=38400, parity=serial.PARITY_NONE, slaveaddress=1, timeout=0.5, debug=False):
         """ Initialize the ModbusRTUmeter object.
 
         Arguments:
             * port: a serial port (string)
             * baudrate: the baudrate to use (integer)
+            * parity: the serial parity to use
             * slaveaddress: the address of the modbus device (integer)
             * Specification of the type. Used to limit the registers to a specific set.
+            * debug: toggle debug output
 
         Returns:
             * An ABBMeter object
 
         """
-        self.instrument = minimalmodbus.Instrument(port, slaveaddress)
+        self.instrument = minimalmodbus.Instrument(port, slaveaddress, debug=debug)
         self.instrument.serial.baudrate = baudrate
         self.instrument.serial.timeout = timeout
+        self.instrument.serial.parity = parity
 
     def read(self, regnames=None):
         """ Read one, many or all registers from the device
@@ -224,8 +228,8 @@ class ModbusRTUMeter:
 
 
 class ABBMeter(ModbusRTUMeter):
-    def __init__(self, port, baudrate=38400, slaveaddress=1, timeout=0.5, model=None):
-        super().__init__(port, baudrate, slaveaddress, timeout)
+    def __init__(self, port, baudrate=38400, parity=serial.PARITY_NONE, slaveaddress=1, timeout=0.5, model=None, debug=False):
+        super().__init__(port, baudrate, parity, slaveaddress, timeout, debug)
         if model in ABBMeter.REGSETS:
             self.REGS = [register for register in ABBMeter._REGS if register['name'] in ABBMeter.REGSETS[model]]
         else:
@@ -555,7 +559,19 @@ class ABBMeter(ModbusRTUMeter):
                        "voltage_l1_n", "current_l1", "active_power_total",
                        "reactive_power_total", "apparent_power_total", "frequency",
                        "phase_angle_power_total", "power_factor_total",
-                       "current_quadrant_total"]
+                       "current_quadrant_total"],
+               "EV3": ["active_import", "active_export", "active_net",
+                       "active_import_l1", "active_import_l2", "active_import_l3",
+                       "active_export_l1", "active_export_l2", "active_export_l3",
+                       "active_net_l1", "active_net_l2", "active_net_l3",
+                       "voltage_l1_n", "voltage_l2_n", "voltage_l3_n",
+                       "voltage_l1_l2", "voltage_l3_l2", "voltage_l1_l3",
+                       "current_l1", "current_l2", "current_l3",
+                       "active_power_total", "active_power_l1", "active_power_l2",
+                       "active_power_l3", "reactive_power_total",
+                       "frequency", "phase_angle_power_total",
+                       "power_factor_total", "power_factor_l1", "power_factor_l2",
+                       "power_factor_l3", "ev3_serial_number"]
                }
     NULLS = [pow(2, n) - 1 for n in (64, 63, 32, 31, 16, 15)]
 
